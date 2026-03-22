@@ -1,2 +1,2 @@
 class Config:
-    BASE_URL = "https://social.qakrotov.com/api/"
+    SOCIAL_API_URL = "https://social.qakrotov.com/api/"

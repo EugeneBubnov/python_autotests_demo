@@ -20,4 +20,20 @@ class ApiClient:
 
     def get(self, path: str, **kwargs):
         url = self._build_url(path)
-        return self.session.get(url, kwargs)
+        return self.session.get(url, **kwargs)
+
+    def post(self, path: str, **kwargs):
+        url = self._build_url(path)
+        return self.session.post(url, **kwargs)
+
+    def put(self, path: str, **kwargs):
+        url = self._build_url(path)
+        return self.session.put(url, **kwargs)
+
+    def patch(self, path: str, **kwargs):
+        url = self._build_url(path)
+        return self.session.patch(url, **kwargs)
+
+    def delete(self, path: str, **kwargs):
+        url = self._build_url(path)
+        return self.session.delete(url, **kwargs)

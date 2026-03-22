@@ -1,0 +1,9 @@
+.vscode
+.pytest_cache
+.env
+__pycache__
+.idea
+venv
+.venv
+DS_Store
+sandbox.py

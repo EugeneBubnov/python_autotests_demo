@@ -156,7 +156,7 @@ class ApiClient:
 
         if "json" in kwargs and kwargs["json"]:
             log_msg += (
-                f"\n  JSON:\n{json.dumps(kwargs['json'], indent=2, ensure_ascii=False)}"
+                f"\nJSON:\n{json.dumps(kwargs['json'], indent=2, ensure_ascii=False)}"
             )
         elif "data" in kwargs and kwargs["data"]:
             log_msg += f"\nDATA: {kwargs['data']}"

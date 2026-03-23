@@ -1,9 +1,17 @@
 import pytest
 
+from models.user import User
 from project_api.api_client import ApiClient
 from project_api.config import Config
+from project_api.social_api.auth_service import AuthService
 
 
 @pytest.fixture
-def social_api_client():
-    return ApiClient(base_url=Config.SOCIAL_API_URL)
+def auth_service():
+    social_api_client = ApiClient(base_url=Config.SOCIAL_API_URL)
+    return AuthService(social_api_client)
+
+
+@pytest.fixture
+def user():
+    return User.create_random_user()

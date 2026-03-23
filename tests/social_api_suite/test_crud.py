@@ -1,2 +1,2 @@
-def test_crud_ops(social_api_client):
-    social_api_client.get("/user/all", headers={"Content-Type": "application/json"})
+def test_crud_ops(auth_service, user):
+    auth_service.reg(login=user.username, password=user.password)

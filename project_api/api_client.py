@@ -1,5 +1,6 @@
-import json
+import json as json_lib
 import logging
+from typing import Any, Dict, Optional
 
 import requests
 from requests import Response
@@ -20,198 +21,222 @@ class ApiClient:
         self.response_text = None
         self.status = None
 
-    def set_token(self, token: str):
-        self.session.headers.update({"Authorization": f"Bearer {token}"})
-
     def _build_url(self, path: str) -> str:
         base = self.base_url.rstrip("/")
         path = path.lstrip("/")
         return f"{base}/{path}"
 
-    def get(self, path: str, **kwargs) -> Response:
+    def get(
+        self, path: str, params: Optional[Dict[str, str]] = None, **kwargs
+    ) -> Response:
         url = self._build_url(path)
-        log_msg = f"\nREQUEST HAS BE SENT: GET {url}"
+        log_msg = f"Request sent.\n[GET]: {url}"
 
         if "headers" in kwargs and kwargs["headers"]:
-            log_msg += f"\nHEADERS: {json.dumps(kwargs['headers'], indent=2)}"
+            log_msg += f"\n[HEADERS]: {json_lib.dumps(kwargs['headers'], indent=2)}"
 
-        if "params" in kwargs and kwargs["params"]:
-            log_msg += f"\nPARAMS: {json.dumps(kwargs['params'], indent=2)}"
+        if params:
+            log_msg += f"\n[PARAMS]: {json_lib.dumps(params, indent=2)}"
 
-        response = self.session.get(url, **kwargs)
+        response = self.session.get(url=url, params=params, **kwargs)
 
         if response.status_code >= 400:
-            logger.error(f"[{url}] STATUS CODE: {response.status_code}")
+            logger.error(f"[{url}|STATUS CODE]: {response.status_code}")
         else:
-            log_msg += f"\nSTATUS CODE: {response.status_code}"
+            log_msg += f"\n[STATUS CODE]: {response.status_code}"
 
         try:
             self.response_data = response.json()
-            log_msg += f"\nRESPONSE:\n{json.dumps(self.response_data, indent=2, ensure_ascii=False)}"
-        except json.JSONDecodeError:
+            log_msg += f"\n[RESPONSE]:\n{json_lib.dumps(self.response_data, indent=2, ensure_ascii=False)}"
+        except json_lib.JSONDecodeError:
             if response.text:
                 self.response_text = response.text
-                log_msg += f"\nRESPONSE-TEXT: {self.response_text[:1000]}"
+                log_msg += f"\n[RESPONSE-TEXT]: {self.response_text[:1000]}"
             else:
-                log_msg += "\nRESPONSE: empty response-body"
+                log_msg += "\n[RESPONSE]: empty response-body"
 
-        logger.info(log_msg)
+        logger.info(f"{log_msg}\n{'=' * 60}")
 
         return response
 
-    def post(self, path: str, **kwargs):
+    def post(
+        self,
+        path: str,
+        params: Optional[Dict[str, str]] = None,
+        json: Optional[Dict[str, Any]] = None,
+        data: Optional[Any] = None,
+        **kwargs,
+    ) -> Response:
         url = self._build_url(path)
 
-        log_msg = f"\nREQUEST HAS BE SENT: POST {url}"
+        log_msg = f"Request sent.\n[POST]: {url}"
 
         if "headers" in kwargs and kwargs["headers"]:
-            log_msg += f"\nHEADERS: {json.dumps(kwargs['headers'], indent=2)}"
+            log_msg += f"\n[HEADERS]: {json_lib.dumps(kwargs['headers'], indent=2)}"
 
-        if "params" in kwargs and kwargs["params"]:
-            log_msg += f"\nPARAMS: {json.dumps(kwargs['params'], indent=2)}"
+        if params:
+            log_msg += f"\n[PARAMS]: {json_lib.dumps(params, indent=2)}"
 
-        if "json" in kwargs and kwargs["json"]:
+        if json:
             log_msg += (
-                f"\nJSON:\n{json.dumps(kwargs['json'], indent=2, ensure_ascii=False)}"
+                f"\n[JSON]:\n{json_lib.dumps(json, indent=2, ensure_ascii=False)}"
             )
-        elif "data" in kwargs and kwargs["data"]:
-            log_msg += f"\nDATA: {kwargs['data']}"
+        elif data:
+            log_msg += f"\n[DATA]: {data}"
 
         if "files" in kwargs and kwargs["files"]:
-            log_msg += f"\nFILES: {list(kwargs['files'].keys())}"
+            log_msg += f"\n[FILES]: {list(kwargs['files'].keys())}"
 
-        response = self.session.post(url, **kwargs)
+        response = self.session.post(url, params=params, data=data, json=json, **kwargs)
 
         if response.status_code >= 400:
-            logger.error(f"[{url}] STATUS CODE: {response.status_code}")
+            logger.error(f"[{url}|STATUS CODE]: {response.status_code}")
         else:
-            log_msg += f"\nSTATUS CODE: {response.status_code}"
+            log_msg += f"\n[STATUS CODE]: {response.status_code}"
 
         try:
             self.response_data = response.json()
-            log_msg += f"\nRESPONSE:\n{json.dumps(self.response_data, indent=2, ensure_ascii=False)}"
-        except json.JSONDecodeError:
+            log_msg += f"\n[RESPONSE]:\n{json_lib.dumps(self.response_data, indent=2, ensure_ascii=False)}"
+        except json_lib.JSONDecodeError:
             if response.text:
                 self.response_text = response.text
                 log_msg += f"\nRESPONSE-TEXT: {self.response_text[:1000]}"
             else:
                 log_msg += "\nRESPONSE: empty response-body"
 
-        logger.info(log_msg)
+        logger.info(f"{log_msg}\n{'=' * 60}")
 
         return response
 
-    def put(self, path: str, **kwargs):
+    def put(
+        self,
+        path: str,
+        params: Optional[Dict[str, str]] = None,
+        json: Optional[Dict[str, Any]] = None,
+        data: Optional[Any] = None,
+        **kwargs,
+    ) -> Response:
         url = self._build_url(path)
 
-        log_msg = f"\nREQUEST HAS BE SENT: PUT {url}"
+        log_msg = f"Request sent.\n[PUT]: {url}"
 
         if "headers" in kwargs and kwargs["headers"]:
-            log_msg += f"\nHEADERS: {json.dumps(kwargs['headers'], indent=2)}"
+            log_msg += f"\n[HEADERS]: {json_lib.dumps(kwargs['headers'], indent=2)}"
 
-        if "params" in kwargs and kwargs["params"]:
-            log_msg += f"\nPARAMS: {json.dumps(kwargs['params'], indent=2)}"
+        if params:
+            log_msg += f"\n[PARAMS]: {json_lib.dumps(params, indent=2)}"
 
-        if "json" in kwargs and kwargs["json"]:
+        if json:
             log_msg += (
-                f"\nJSON:\n{json.dumps(kwargs['json'], indent=2, ensure_ascii=False)}"
+                f"\n[JSON]:\n{json_lib.dumps(json, indent=2, ensure_ascii=False)}"
             )
-        elif "data" in kwargs and kwargs["data"]:
-            log_msg += f"\nDATA: {kwargs['data']}"
+        elif data:
+            log_msg += f"\n[DATA]: {data}"
 
         if "files" in kwargs and kwargs["files"]:
-            log_msg += f"\nFILES: {list(kwargs['files'].keys())}"
+            log_msg += f"\n[FILES]: {list(kwargs['files'].keys())}"
 
-        response = self.session.put(url, **kwargs)
+        response = self.session.put(url, params=params, data=data, json=json, **kwargs)
 
         if response.status_code >= 400:
-            logger.error(f"[{url}] STATUS CODE: {response.status_code}")
+            logger.error(f"[{url}|STATUS CODE]: {response.status_code}")
         else:
-            log_msg += f"\nSTATUS CODE: {response.status_code}"
+            log_msg += f"\n[STATUS CODE]: {response.status_code}"
 
         try:
             self.response_data = response.json()
-            log_msg += f"\nRESPONSE:\n{json.dumps(self.response_data, indent=2, ensure_ascii=False)}"
-        except json.JSONDecodeError:
+            log_msg += f"\n[RESPONSE]:\n{json_lib.dumps(self.response_data, indent=2, ensure_ascii=False)}"
+        except json_lib.JSONDecodeError:
             if response.text:
                 self.response_text = response.text
-                log_msg += f"\nRESPONSE-TEXT: {self.response_text[:1000]}"
+                log_msg += f"\n[RESPONSE-TEXT]: {self.response_text[:1000]}"
             else:
-                log_msg += "\nRESPONSE: empty response-body"
+                log_msg += "\n[RESPONSE]: empty response-body"
 
-        logger.info(log_msg)
+        logger.info(f"{log_msg}\n{'=' * 60}")
 
         return response
 
-    def patch(self, path: str, **kwargs):
+    def patch(
+        self,
+        path: str,
+        params: Optional[Dict[str, str]] = None,
+        json: Optional[Dict[str, Any]] = None,
+        data: Optional[Any] = None,
+        **kwargs,
+    ) -> Response:
         url = self._build_url(path)
 
-        log_msg = f"\nREQUEST HAS BE SENT: PATCH {url}"
+        log_msg = f"Request sent.\n[PATCH]: {url}"
 
         if "headers" in kwargs and kwargs["headers"]:
-            log_msg += f"\nHEADERS: {json.dumps(kwargs['headers'], indent=2)}"
+            log_msg += f"\n[HEADERS]: {json_lib.dumps(kwargs['headers'], indent=2)}"
 
-        if "params" in kwargs and kwargs["params"]:
-            log_msg += f"\nPARAMS: {json.dumps(kwargs['params'], indent=2)}"
+        if params:
+            log_msg += f"\n[PARAMS]: {json_lib.dumps(params, indent=2)}"
 
-        if "json" in kwargs and kwargs["json"]:
+        if json:
             log_msg += (
-                f"\nJSON:\n{json.dumps(kwargs['json'], indent=2, ensure_ascii=False)}"
+                f"\n[JSON]:\n{json_lib.dumps(json, indent=2, ensure_ascii=False)}"
             )
-        elif "data" in kwargs and kwargs["data"]:
-            log_msg += f"\nDATA: {kwargs['data']}"
+        elif data:
+            log_msg += f"\n[DATA]: {data}"
 
         if "files" in kwargs and kwargs["files"]:
-            log_msg += f"\nFILES: {list(kwargs['files'].keys())}"
+            log_msg += f"\n[FILES]: {list(kwargs['files'].keys())}"
 
-        response = self.session.patch(url, **kwargs)
+        response = self.session.patch(
+            url, params=params, data=data, json=json, **kwargs
+        )
 
         if response.status_code >= 400:
-            logger.error(f"[{url}] STATUS CODE: {response.status_code}")
+            logger.error(f"[{url}] | STATUS CODE]: {response.status_code}")
         else:
-            log_msg += f"\nSTATUS CODE: {response.status_code}"
+            log_msg += f"\n[STATUS CODE]: {response.status_code}"
 
         try:
             self.response_data = response.json()
-            log_msg += f"\nRESPONSE:\n{json.dumps(self.response_data, indent=2, ensure_ascii=False)}"
-        except json.JSONDecodeError:
+            log_msg += f"\n[RESPONSE]:\n{json_lib.dumps(self.response_data, indent=2, ensure_ascii=False)}"
+        except json_lib.JSONDecodeError:
             if response.text:
                 self.response_text = response.text
-                log_msg += f"\nRESPONSE-TEXT: {self.response_text[:1000]}"
+                log_msg += f"\n[RESPONSE-TEXT]: {self.response_text[:1000]}"
             else:
-                log_msg += "\nRESPONSE: empty response-body"
+                log_msg += "\n[RESPONSE]: empty response-body"
 
-        logger.info(log_msg)
+        logger.info(f"{log_msg}\n{'=' * 60}")
 
         return response
 
-    def delete(self, path: str, **kwargs):
+    def delete(
+        self, path: str, params: Optional[Dict[str, str]] = None, **kwargs
+    ) -> Response:
         url = self._build_url(path)
-        log_msg = f"\nREQUEST HAS BE SENT: DELETE {url}"
+        log_msg = f"Request sent.\n[DELETE]: {url}"
 
         if "headers" in kwargs and kwargs["headers"]:
-            log_msg += f"\nHEADERS: {json.dumps(kwargs['headers'], indent=2)}"
+            log_msg += f"\n[HEADERS]: {json_lib.dumps(kwargs['headers'], indent=2)}"
 
-        if "params" in kwargs and kwargs["params"]:
-            log_msg += f"\nPARAMS: {json.dumps(kwargs['params'], indent=2)}"
+        if params:
+            log_msg += f"\n[PARAMS]: {json_lib.dumps(params, indent=2)}"
 
-        response = self.session.delete(url, **kwargs)
+        response = self.session.delete(url, params=params, **kwargs)
 
         if response.status_code >= 400:
-            logger.error(f"[{url}] STATUS CODE: {response.status_code}")
+            logger.error(f"[{url} | STATUS CODE]: {response.status_code}")
         else:
-            log_msg += f"\nSTATUS CODE: {response.status_code}"
+            log_msg += f"\n[STATUS CODE]: {response.status_code}"
 
         try:
             self.response_data = response.json()
-            log_msg += f"\nRESPONSE:\n{json.dumps(self.response_data, indent=2, ensure_ascii=False)}"
-        except json.JSONDecodeError:
+            log_msg += f"\n[RESPONSE]:\n{json_lib.dumps(self.response_data, indent=2, ensure_ascii=False)}"
+        except json_lib.JSONDecodeError:
             if response.text:
                 self.response_text = response.text
-                log_msg += f"\nRESPONSE-TEXT: {self.response_text[:1000]}"
+                log_msg += f"\n[RESPONSE-TEXT]: {self.response_text[:1000]}"
             else:
-                log_msg += "\nRESPONSE: empty response-body"
+                log_msg += "\n[RESPONSE]: empty response-body"
 
-        logger.info(log_msg)
+        logger.info(f"{log_msg}\n{'=' * 60}")
 
         return response

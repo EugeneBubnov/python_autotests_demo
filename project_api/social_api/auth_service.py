@@ -14,7 +14,7 @@ class AuthService:
                 "/api/auth/logout", headers={"Content-Type": "application/json"}
             )
 
-    def reg(self, login: str, password: str) -> Response:
+    def register(self, login: str, password: str) -> Response:
         with allure.step("Зарегистрироваться. Отправить запрос: [POST] /api/auth/reg"):
             return self.client.post(
                 "/api/auth/reg",
@@ -22,7 +22,7 @@ class AuthService:
                 json={"username": login, "password": password},
             )
 
-    def token(self, login: str, password: str) -> Response:
+    def get_auth_token(self, login: str, password: str) -> Response:
         with allure.step(
             "Получить токен авторизации. Отправить запрос: [POST] /api/auth/token"
         ):

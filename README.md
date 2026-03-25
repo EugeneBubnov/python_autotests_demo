@@ -25,10 +25,10 @@
 pip install -r requirements.txt
 
 # Запуск одного теста
-pytest tests/api/ --alluredir=allure-results
+pytest tests/social_api_suite/ --alluredir=allure-results
 
 # Запуск тестов в параллельном режиме(если тестов больше, чем 1)
-pytest tests/api/ -n auto --alluredir=allure-results
+pytest tests/social_api_suite/ -n auto --alluredir=allure-results
 
 # Генерация страницы с отчётом
 allure serve allure-results

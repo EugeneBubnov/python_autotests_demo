@@ -64,8 +64,7 @@ class UserService:
 
     def delete_user(self, user: User) -> Response:
         with allure.step(
-            "Удалить пользователя. "
-            "Отправить запрос: [DELETE] /api/user/delete (Authorization: Basic 'base64[username:password]')"
+            "Удалить пользователя. Отправить запрос: [DELETE] /api/user/delete"
         ):
             return self.client.delete(
                 endpoint="/api/user/delete",

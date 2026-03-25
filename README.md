@@ -29,7 +29,7 @@ python -m venv .venv
 # Установка библиотек
 pip install -r requirements.txt
 
-# Запуск одного теста
+# Запуск тестов
 pytest tests/social_api_suite/ --alluredir=allure-results
 
 # Запуск тестов в параллельном режиме(если тестов больше, чем 1)

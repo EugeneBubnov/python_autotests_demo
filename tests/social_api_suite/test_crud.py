@@ -123,5 +123,4 @@ def test_crud_demo(auth_service, user_service, user):
         # Убедиться, что пользователь удалён успешно
         all_users = user_service.get_all_users_as_list().json()
         all_users_list = jsonpath.findall("$.*.username", all_users)
-        print(all_users_list)
         assert user.username not in all_users_list

@@ -35,6 +35,6 @@ pytest tests/api/ -n auto --alluredir=allure-results
 allure serve allure-results
 ```
 ## Отчёт:
-![allure](demo_images\allure-image.png)
+![allure](demo_images/allure-image.png)
 
 ---

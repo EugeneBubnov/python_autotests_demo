@@ -22,6 +22,11 @@
 ## Запуск api-тестов
 
 ```bash
+# Создание и активация виртуального окружения
+python -m venv .venv
+.venv\Scripts\activate
+
+# Установка библиотек
 pip install -r requirements.txt
 
 # Запуск одного теста
@@ -31,7 +36,7 @@ pytest tests/social_api_suite/ --alluredir=allure-results
 pytest tests/social_api_suite/ -n auto --alluredir=allure-results
 
 # Генерация страницы с отчётом
-allure serve allure-results
+allure serve 
 ```
 ## Отчёт:
 ![allure](demo_images/allure-image.png)

@@ -24,23 +24,6 @@ def test_crud_demo(auth_service, user_service, user):
             "Expected is not None password"
         )
     with allure.step("Получить информацию о пользователе"):
-        # Получить токен
-        token_response = auth_service.get_auth_token(
-            login=user.username, password=user.password
-        )
-        token_json = token_response.json()
-
-        assert token_response.status_code == 200
-        assert token_json.get("token") is not None
-        user.token = token_json.get("token")
-
-        assert token_json.get("username") == user.username, (
-            f"Expected username: {user.username}, but: {token_json.get('username')}"
-        )
-        assert token_json.get("password") == user.password, (
-            f"Expected password: {user.password}, but: {token_json.get('password')}"
-        )
-
         # Получить уникальный Id пользователя
         all_users = user_service.get_all_users_as_list().json()
         current_user = jsonpath.findall(
@@ -88,23 +71,57 @@ def test_crud_demo(auth_service, user_service, user):
                 assert value == user_profile_json.get(key), (
                     f"Expected {key}: {value}, but: {user_profile_json.get(key)}"
                 )
-    # with allure.step("Изменить пароль и обновить информацию в профиле пользователя"):
-    #     # Изменить пароль
-    #     user_service.change_user_password(user, f"new_{user.password}")
-    #     user.password = f"new_{user.password}"
-    #     # Обновить информацию в профиле
-    #     new_info = {
-    #         "username": "newEug",
-    #         "first_name": "newEugene",
-    #         "last_name": "newBub",
-    #         "email": "newnew@invalidggmail.comscv",
-    #         "city": "Ottawa",
-    #         "country": "Canada",
-    #         "family_status": "a",
-    #         "gender": "M",
-    #         "birth_date": "2012-08-24",
-    #     }
-    #     user_service.update_user_profile(user, updating_dict=new_info)
-    #     user.update_user(**new_info)
-    # with allure.step("Удалить пользователя"):
-    #     user_service.delete_user(user)
+    with allure.step("Изменить пароль и обновить информацию в профиле пользователя"):
+        # Изменить пароль
+        old_password = user.password
+        new_password = f"new_{user.password}"
+
+        change_pass_response = user_service.change_user_password(user, new_password)
+        change_pass_json = change_pass_response.json()
+
+        assert change_pass_response.status_code == 200
+        expected_password_info = {
+            "old_password": old_password,
+            "new_password1": new_password,
+            "new_password2": new_password,
+        }
+        for key, value in expected_password_info.items():
+            assert value == change_pass_json.get(key), (
+                f"Expected {key}: {value}, but: {key}: {change_pass_json.get(key)}"
+            )
+        user.password = new_password
+
+        # Обновить информацию в профиле
+        new_info = {
+            "username": "newEug",
+            "first_name": "newEugene",
+            "last_name": "newBub",
+            "email": "newnew@invalidggmail.comscv",
+            "city": "Ottawa",
+            "country": "Canada",
+            "family_status": "a",
+            "gender": "M",
+            "birth_date": "2012-08-24",
+        }
+
+        update_profile_response = user_service.update_user_profile(
+            user, updating_dict=new_info
+        )
+        update_profile_json = update_profile_response.json()
+
+        assert update_profile_response.status_code == 200
+        for key, value in new_info.items():
+            assert value == update_profile_json.get(key), (
+                f"Expected {key}: {value}, but: {key}: {update_profile_json.get(key)}"
+            )
+
+        user.update_user(**new_info)
+    with allure.step("Удалить пользователя"):
+        delete_response = user_service.delete_user(user)
+        assert delete_response.status_code == 204
+
+        # Убедиться, что пользователь удалён успешно
+        all_users = user_service.get_all_users_as_list().json()
+        all_users_list = jsonpath.findall("$.*.username", all_users)
+        print(all_users_list)
+        assert user.username not in all_users_list

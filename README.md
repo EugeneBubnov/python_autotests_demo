@@ -2,7 +2,6 @@
 [![Python](https://img.shields.io/badge/Python-3.14.2-blue)](https://www.python.org/)
 [![Pytest](https://img.shields.io/badge/Pytest-8.0%2B-orange)](https://docs.pytest.org/)
 [![Requests](https://img.shields.io/badge/Requests-2.31%2B-yellow)](https://requests.readthedocs.io/)
-[![Playwright](https://img.shields.io/badge/Playwright-1.40%2B-brightgreen)](https://playwright.dev/)
 [![Allure](https://img.shields.io/badge/Allure%20Report-2.24%2B-ff69b4)](https://allurereport.org/)
 
 ## Демо проекта по автоматизированному тестированию REST API.

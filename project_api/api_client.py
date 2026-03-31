@@ -45,6 +45,7 @@ class ApiClient:
 
         if params:
             log_msg += f"\n[PARAMS]: {self._format_json(params)}"
+        
         if json:
             log_msg += f"\n[JSON]:\n{self._format_json(json)}"
         elif data:

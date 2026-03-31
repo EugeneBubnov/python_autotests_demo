@@ -19,12 +19,101 @@ class ApiClient:
 
         self.response_data = None
         self.response_text = None
-        self.status = None
 
     def _build_url(self, path: str) -> str:
         base = self.base_url.rstrip("/")
         path = path.lstrip("/")
         return f"{base}/{path}"
+
+    def _format_json(self, data: Any) -> str:
+        return json_lib.dumps(data, indent=2, ensure_ascii=False)
+
+    def _log_request(
+        self,
+        method: str,
+        url: str,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        json: Optional[Dict[str, Any]] = None,
+        data: Optional[Any] = None,
+        **kwargs,
+    ):
+        log_msg = f"\n[{method}]: Request sent: {url}"
+
+        if headers:
+            log_msg += f"\n[HEADERS]: {self._format_json(headers)}"
+
+        if params:
+            log_msg += f"\n[PARAMS]: {self._format_json(params)}"
+        if json:
+            log_msg += f"\n[JSON]:\n{self._format_json(json)}"
+        elif data:
+            log_msg += f"\n[DATA]: {data}"
+
+        if "files" in kwargs and kwargs["files"]:
+            log_msg += f"\n[FILES]: {list(kwargs['files'].keys())}"
+
+        return log_msg
+
+    def _log_response(self, response: Response) -> str:
+        log_msg = f"\n[STATUS CODE]: {response.status_code}"
+
+        try:
+            data = response.json()
+            self.response_data = data
+            log_msg += f"\n[RESPONSE]:\n{self._format_json(data)}"
+        except json_lib.JSONDecodeError:
+            text = response.text
+            self.response_text = text
+
+            if text:
+                log_msg += f"\n[RESPONSE-TEXT]: {text[:1000]}"
+            else:
+                log_msg += "\n[RESPONSE]: empty"
+
+        return log_msg
+
+    def _request(
+        self,
+        method: str,
+        endpoint: str,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        json: Optional[Dict[str, Any]] = None,
+        data: Optional[Any] = None,
+        **kwargs,
+    ) -> Response:
+        url = self._build_url(endpoint)
+
+        request_logs = self._log_request(
+            method=method,
+            url=url,
+            params=params,
+            headers=headers,
+            json=json,
+            data=data,
+            **kwargs,
+        )
+
+        response = self.session.request(
+            method=method,
+            url=url,
+            params=params,
+            headers=headers,
+            json=json,
+            data=data,
+            **kwargs,
+        )
+
+        response_logs = self._log_response(response)
+
+        full_logs_info = f"{request_logs}\n{response_logs}"
+        if response.status_code >= 400:
+            logger.error(full_logs_info)
+        else:
+            logger.info(full_logs_info)
+
+        return response
 
     def get(
         self,
@@ -33,35 +122,13 @@ class ApiClient:
         headers: Optional[Dict[str, str]] = None,
         **kwargs,
     ) -> Response:
-        url = self._build_url(endpoint)
-        log_msg = f"Request sent.\n[GET]: {url}"
-
-        if headers:
-            log_msg += f"\n[HEADERS]: {json_lib.dumps(headers, indent=2)}"
-
-        if params:
-            log_msg += f"\n[PARAMS]: {json_lib.dumps(params, indent=2)}"
-
-        response = self.session.get(url=url, params=params, headers=headers, **kwargs)
-
-        if response.status_code >= 400:
-            logger.error(f"[{url}|STATUS CODE]: {response.status_code}")
-        else:
-            log_msg += f"\n[STATUS CODE]: {response.status_code}"
-
-        try:
-            self.response_data = response.json()
-            log_msg += f"\n[RESPONSE]:\n{json_lib.dumps(self.response_data, indent=2, ensure_ascii=False)}"
-        except json_lib.JSONDecodeError:
-            if response.text:
-                self.response_text = response.text
-                log_msg += f"\n[RESPONSE-TEXT]: {self.response_text[:1000]}"
-            else:
-                log_msg += "\n[RESPONSE]: empty response-body"
-
-        logger.info(f"{log_msg}")
-
-        return response
+        return self._request(
+            method="GET",
+            endpoint=endpoint,
+            params=params,
+            headers=headers,
+            **kwargs,
+        )
 
     def post(
         self,
@@ -72,48 +139,15 @@ class ApiClient:
         data: Optional[Any] = None,
         **kwargs,
     ) -> Response:
-        url = self._build_url(endpoint)
-
-        log_msg = f"Request sent.\n[POST]: {url}"
-
-        if headers:
-            log_msg += f"\n[HEADERS]: {json_lib.dumps(headers, indent=2)}"
-
-        if params:
-            log_msg += f"\n[PARAMS]: {json_lib.dumps(params, indent=2)}"
-
-        if json:
-            log_msg += (
-                f"\n[JSON]:\n{json_lib.dumps(json, indent=2, ensure_ascii=False)}"
-            )
-        elif data:
-            log_msg += f"\n[DATA]: {data}"
-
-        if "files" in kwargs and kwargs["files"]:
-            log_msg += f"\n[FILES]: {list(kwargs['files'].keys())}"
-
-        response = self.session.post(
-            url, params=params, headers=headers, data=data, json=json, **kwargs
+        return self._request(
+            method="POST",
+            endpoint=endpoint,
+            params=params,
+            headers=headers,
+            json=json,
+            data=data,
+            **kwargs,
         )
-
-        if response.status_code >= 400:
-            logger.error(f"[{url}|STATUS CODE]: {response.status_code}")
-        else:
-            log_msg += f"\n[STATUS CODE]: {response.status_code}"
-
-        try:
-            self.response_data = response.json()
-            log_msg += f"\n[RESPONSE]:\n{json_lib.dumps(self.response_data, indent=2, ensure_ascii=False)}"
-        except json_lib.JSONDecodeError:
-            if response.text:
-                self.response_text = response.text
-                log_msg += f"\n[RESPONSE-TEXT]: {self.response_text[:1000]}"
-            else:
-                log_msg += "\n[RESPONSE]: empty response-body"
-
-        logger.info(f"{log_msg}")
-
-        return response
 
     def put(
         self,
@@ -124,48 +158,15 @@ class ApiClient:
         data: Optional[Any] = None,
         **kwargs,
     ) -> Response:
-        url = self._build_url(endpoint)
-
-        log_msg = f"Request sent.\n[PUT]: {url}"
-
-        if headers:
-            log_msg += f"\n[HEADERS]: {json_lib.dumps(headers, indent=2)}"
-
-        if params:
-            log_msg += f"\n[PARAMS]: {json_lib.dumps(params, indent=2)}"
-
-        if json:
-            log_msg += (
-                f"\n[JSON]:\n{json_lib.dumps(json, indent=2, ensure_ascii=False)}"
-            )
-        elif data:
-            log_msg += f"\n[DATA]: {data}"
-
-        if "files" in kwargs and kwargs["files"]:
-            log_msg += f"\n[FILES]: {list(kwargs['files'].keys())}"
-
-        response = self.session.put(
-            url, params=params, headers=headers, data=data, json=json, **kwargs
+        return self._request(
+            method="PUT",
+            endpoint=endpoint,
+            params=params,
+            headers=headers,
+            json=json,
+            data=data,
+            **kwargs,
         )
-
-        if response.status_code >= 400:
-            logger.error(f"[{url}|STATUS CODE]: {response.status_code}")
-        else:
-            log_msg += f"\n[STATUS CODE]: {response.status_code}"
-
-        try:
-            self.response_data = response.json()
-            log_msg += f"\n[RESPONSE]:\n{json_lib.dumps(self.response_data, indent=2, ensure_ascii=False)}"
-        except json_lib.JSONDecodeError:
-            if response.text:
-                self.response_text = response.text
-                log_msg += f"\n[RESPONSE-TEXT]: {self.response_text[:1000]}"
-            else:
-                log_msg += "\n[RESPONSE]: empty response-body"
-
-        logger.info(f"{log_msg}")
-
-        return response
 
     def patch(
         self,
@@ -176,48 +177,15 @@ class ApiClient:
         data: Optional[Any] = None,
         **kwargs,
     ) -> Response:
-        url = self._build_url(endpoint)
-
-        log_msg = f"Request sent.\n[PATCH]: {url}"
-
-        if headers:
-            log_msg += f"\n[HEADERS]: {json_lib.dumps(headers, indent=2)}"
-
-        if params:
-            log_msg += f"\n[PARAMS]: {json_lib.dumps(params, indent=2)}"
-
-        if json:
-            log_msg += (
-                f"\n[JSON]:\n{json_lib.dumps(json, indent=2, ensure_ascii=False)}"
-            )
-        elif data:
-            log_msg += f"\n[DATA]: {data}"
-
-        if "files" in kwargs and kwargs["files"]:
-            log_msg += f"\n[FILES]: {list(kwargs['files'].keys())}"
-
-        response = self.session.patch(
-            url, params=params, headers=headers, data=data, json=json, **kwargs
+        return self._request(
+            method="PATCH",
+            endpoint=endpoint,
+            params=params,
+            headers=headers,
+            json=json,
+            data=data,
+            **kwargs,
         )
-
-        if response.status_code >= 400:
-            logger.error(f"[{url}] | STATUS CODE]: {response.status_code}")
-        else:
-            log_msg += f"\n[STATUS CODE]: {response.status_code}"
-
-        try:
-            self.response_data = response.json()
-            log_msg += f"\n[RESPONSE]:\n{json_lib.dumps(self.response_data, indent=2, ensure_ascii=False)}"
-        except json_lib.JSONDecodeError:
-            if response.text:
-                self.response_text = response.text
-                log_msg += f"\n[RESPONSE-TEXT]: {self.response_text[:1000]}"
-            else:
-                log_msg += "\n[RESPONSE]: empty response-body"
-
-        logger.info(f"{log_msg}")
-
-        return response
 
     def delete(
         self,
@@ -226,32 +194,10 @@ class ApiClient:
         headers: Optional[Dict[str, str]] = None,
         **kwargs,
     ) -> Response:
-        url = self._build_url(endpoint)
-        log_msg = f"Request sent.\n[DELETE]: {url}"
-
-        if headers:
-            log_msg += f"\n[HEADERS]: {json_lib.dumps(headers, indent=2)}"
-
-        if params:
-            log_msg += f"\n[PARAMS]: {json_lib.dumps(params, indent=2)}"
-
-        response = self.session.delete(url, params=params, headers=headers, **kwargs)
-
-        if response.status_code >= 400:
-            logger.error(f"{url}\n[STATUS CODE]: {response.status_code}")
-        else:
-            log_msg += f"\n[STATUS CODE]: {response.status_code}"
-
-        try:
-            self.response_data = response.json()
-            log_msg += f"\n[RESPONSE]:\n{json_lib.dumps(self.response_data, indent=2, ensure_ascii=False)}"
-        except json_lib.JSONDecodeError:
-            if response.text:
-                self.response_text = response.text
-                log_msg += f"\n[RESPONSE-TEXT]: {self.response_text[:1000]}"
-            else:
-                log_msg += "\n[RESPONSE]: empty response-body"
-
-        logger.info(f"{log_msg}")
-
-        return response
+        return self._request(
+            method="DELETE",
+            endpoint=endpoint,
+            params=params,
+            headers=headers,
+            **kwargs,
+        )

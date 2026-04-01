@@ -1,15 +1,43 @@
 import json as json_lib
 import logging
+import os
+import sys
 from typing import Any, Dict, Optional
 
 import requests
 from requests import Response
 
-logging.basicConfig(
-    level=logging.INFO,
-    format=f"\n{'=' * 60}\n[%(asctime)s | %(levelname)s]: %(message)s",
-)
+# Полностью очищаем все существующие настройки логирования
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+
+# Создаем свой логгер
 logger = logging.getLogger(__name__)
+
+# Создаем handler с простым текстовым выводом (без цветов)
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(
+    logging.Formatter(
+        fmt="[%(asctime)s | %(levelname)s]: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
+)
+
+# Добавляем handler только к нашему логгеру
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
+# Отключаем propagation (чтобы логи не шли в корневой логгер)
+logger.propagate = False
+
+# Отключаем ANSI цвета в выводе
+os.environ["PYTEST_ADDOPTS"] = "--color=no"
+os.environ["FORCE_COLOR"] = "0"
+os.environ["NO_COLOR"] = "1"
+
+# Отключаем логи от библиотек
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("pytest").setLevel(logging.CRITICAL)
 
 
 class ApiClient:
@@ -45,7 +73,7 @@ class ApiClient:
 
         if params:
             log_msg += f"\n[PARAMS]: {self._format_json(params)}"
-        
+
         if json:
             log_msg += f"\n[JSON]:\n{self._format_json(json)}"
         elif data:
@@ -107,12 +135,7 @@ class ApiClient:
         )
 
         response_logs = self._log_response(response)
-
-        full_logs_info = f"{request_logs}\n{response_logs}"
-        if response.status_code >= 400:
-            logger.error(full_logs_info)
-        else:
-            logger.info(full_logs_info)
+        logger.info(f"{request_logs}\n{response_logs}")
 
         return response
 

@@ -8,20 +8,19 @@ from project_api.social_api.user_service import UserService
 
 
 @pytest.fixture
-def social_api_client():
+def auth_service():
     api_client = ApiClient(base_url=Config.SOCIAL_API_URL)
-    yield api_client
+    service = AuthService(api_client)
+    yield service
     api_client.session.close()
 
 
 @pytest.fixture
-def auth_service(social_api_client: ApiClient):
-    return AuthService(social_api_client)
-
-
-@pytest.fixture
-def user_service(social_api_client: ApiClient):
-    return UserService(social_api_client)
+def user_service():
+    api_client = ApiClient(base_url=Config.SOCIAL_API_URL)
+    service = UserService(api_client)
+    yield service
+    api_client.session.close()
 
 
 @pytest.fixture
